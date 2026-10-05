@@ -7,6 +7,32 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your_google_client_id
+            client-secret: your_google_client_secret
+            scope:
+              - openid
+              - profile
+              - email
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    connection-timeout: 5000
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000
+          multiplier: 2.0
+          max-interval: 10000
 
 app:
   upload:

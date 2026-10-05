@@ -1,11 +1,13 @@
 package com.example.demo_crud_spring.service.impl;
 
+import com.example.demo_crud_spring.exception.DuplicateEmailException;
 import com.example.demo_crud_spring.exception.ResourceNotFoundException;
 import com.example.demo_crud_spring.model.dto.UserDto;
 import com.example.demo_crud_spring.model.entity.User;
 import com.example.demo_crud_spring.model.request.UserRequest;
 import com.example.demo_crud_spring.repository.UserRepository;
 import com.example.demo_crud_spring.service.FileStorageService;
+import com.example.demo_crud_spring.service.NotificationService;
 import com.example.demo_crud_spring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,13 +22,19 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
     public UserDto createUser(UserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateEmailException("Email already in use: " + request.getEmail());
+        }
         User user = toEntity(request, new User());
         User saved = userRepository.save(user);
-        return toDto(saved);
+        UserDto dto = toDto(saved);
+        notificationService.notifyUserRegistered(dto);
+        return dto;
     }
 
     @Override
@@ -34,6 +42,9 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(Long id, UserRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            throw new DuplicateEmailException("Email already in use: " + request.getEmail());
+        }
         toEntity(request, user);
         User updated = userRepository.save(user);
         return toDto(updated);

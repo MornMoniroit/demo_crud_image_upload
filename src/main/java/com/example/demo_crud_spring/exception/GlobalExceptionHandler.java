@@ -1,6 +1,7 @@
 package com.example.demo_crud_spring.exception;
 
 import com.example.demo_crud_spring.model.response.ApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -19,6 +20,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(ex.getMessage(), null, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateEmail(DuplicateEmailException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(ex.getMessage(), null, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>("A record with these details already exists", null, LocalDateTime.now()));
     }
 
     @ExceptionHandler(FileStorageException.class)
