@@ -5,6 +5,7 @@ import com.example.demo_crud_spring.model.dto.NotificationDto;
 import com.example.demo_crud_spring.model.entity.Comment;
 import com.example.demo_crud_spring.model.entity.Notification;
 import com.example.demo_crud_spring.model.entity.Post;
+import com.example.demo_crud_spring.model.entity.PostReaction;
 import com.example.demo_crud_spring.model.response.PageResponse;
 import com.example.demo_crud_spring.repository.NotificationRepository;
 import com.example.demo_crud_spring.repository.UserRepository;
@@ -30,6 +31,25 @@ public class UserNotificationServiceImpl implements UserNotificationService {
         notification.setMessage(comment.getCommenterName() + " commented on your post \"" + post.getTitle() + "\"");
         notification.setRelatedPostId(post.getId());
         notification.setRelatedCommentId(comment.getId());
+        notification.setRead(false);
+
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
+    public void notifyNewReaction(Post post, PostReaction reaction) {
+        if (post.getAuthor().getId().equals(reaction.getUser().getId())) {
+            return;
+        }
+
+        String reactorName = reaction.getUser().getFirstName() + " " + reaction.getUser().getLastName();
+
+        Notification notification = new Notification();
+        notification.setRecipient(post.getAuthor());
+        notification.setMessage(reactorName + " reacted " + reaction.getReactionType()
+                + " to your post \"" + post.getTitle() + "\"");
+        notification.setRelatedPostId(post.getId());
         notification.setRead(false);
 
         notificationRepository.save(notification);

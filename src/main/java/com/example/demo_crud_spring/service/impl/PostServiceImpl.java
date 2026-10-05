@@ -9,12 +9,14 @@ import com.example.demo_crud_spring.model.response.PageResponse;
 import com.example.demo_crud_spring.repository.CommentRepository;
 import com.example.demo_crud_spring.repository.PostRepository;
 import com.example.demo_crud_spring.repository.UserRepository;
+import com.example.demo_crud_spring.service.FileStorageService;
 import com.example.demo_crud_spring.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
 
     @Override
     @Transactional
@@ -77,6 +80,25 @@ public class PostServiceImpl implements PostService {
         postRepository.deleteById(id);
     }
 
+    @Override
+    @Transactional
+    public PostDto uploadPostImage(Long id, MultipartFile image) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
+
+        String storedFilename = fileStorageService.store(image);
+        String previousImage = post.getPostImg();
+
+        post.setPostImg(storedFilename);
+        Post updated = postRepository.save(post);
+
+        if (previousImage != null) {
+            fileStorageService.delete(previousImage);
+        }
+
+        return toDto(updated);
+    }
+
     private PostDto toDto(Post post) {
         User author = post.getAuthor();
         String authorName = author.getFirstName() + " " + author.getLastName();
@@ -84,6 +106,7 @@ public class PostServiceImpl implements PostService {
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
+                post.getPostImg(),
                 author.getId(),
                 authorName,
                 post.getCreatedAt(),

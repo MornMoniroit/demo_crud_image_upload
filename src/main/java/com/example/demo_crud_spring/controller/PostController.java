@@ -11,8 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -48,6 +50,13 @@ public class PostController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageResponse<PostDto> posts = postService.getAllPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>("Posts retrieved successfully", posts, LocalDateTime.now()));
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<PostDto>> uploadPostImage(@PathVariable Long id,
+                                                                 @RequestParam("image") MultipartFile image) {
+        PostDto updated = postService.uploadPostImage(id, image);
+        return ResponseEntity.ok(new ApiResponse<>("Post image uploaded successfully", updated, LocalDateTime.now()));
     }
 
     @DeleteMapping("/{id}")
